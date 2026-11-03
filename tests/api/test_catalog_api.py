@@ -1,10 +1,7 @@
 import random
-
 import allure
 import pytest
-import requests
 from pydantic import ValidationError
-
 from models.api_responses import APIError, ProductsResponse, BrandsResponse, APIMessage, UserDetailsResponse
 from models.user import RegistrationData
 from utils.generate_user_data_for_api_tests import generate_user_data
@@ -32,10 +29,8 @@ def test_get_catalog_endpoints_success(api_session, path, response_model):
     with allure.step("Валидируем структуру ответа через Pydantic"):
         response_data = response.json()
         try:
-            # Магия: передаем словарь в модель, тип которой мы параметризовали!
             validated_response = response_model(**response_data)
 
-            # Дополнительная бизнес-проверка: списки не должны быть пустыми
             if hasattr(validated_response, 'products'):
                 assert len(validated_response.products) > 0, "Список продуктов пустой"
             elif hasattr(validated_response, 'brands'):
@@ -66,7 +61,6 @@ def test_catalog_endpoints_invalid_method(api_session, path, method):
     """Тестируем, что неподдерживаемые методы возвращают корректную ошибку"""
 
     with allure.step(f"Отправляем {method} запрос к {path}"):
-        # requests.request позволяет динамически выбирать метод без if/else!
         response = api_session.request(method, f"{BASE_URL}{path}")
 
     with allure.step("Проверяем, что HTTP статус все равно 200 (особенность этого API)"):
@@ -103,7 +97,6 @@ def test_search_products_success(api_session, query, expected_has_results):
     """Тестируем POST запрос для поиска продукта"""
 
     with allure.step(f"Отправляем POST запрос к /api/searchProduct с запросом '{query}'"):
-        # Используем data= для отправки как form-data, как требует этот API
         response = api_session.post(f"{BASE_URL}/api/searchProduct", data={"search_product": query})
 
     with allure.step("Проверяем, что HTTP статус равен 200"):
@@ -117,7 +110,6 @@ def test_search_products_success(api_session, query, expected_has_results):
             assert validated_response.responseCode == 200, \
                 f"Ожидался responseCode 200, фактический: {validated_response.responseCode}"
 
-            # bool(список) вернет True, если список не пустой, и False, если пустой
             actual_has_results = bool(validated_response.products)
 
             assert actual_has_results == expected_has_results, \
@@ -235,7 +227,6 @@ def test_update_user(api_session, create_delete_acc):
         "city", "state", "zipcode", "mobile_number"
     ])
 
-    # Получаем исходные данные пользователя
     with allure.step("Получаем исходные данные пользователя через getUserDetailByEmail"):
         initial_response = api_session.get(
             f"{BASE_URL}/api/getUserDetailByEmail?email={user_obj.email}",
@@ -244,11 +235,9 @@ def test_update_user(api_session, create_delete_acc):
         initial_data = UserDetailsResponse(**initial_response.json())
         initial_field_value = getattr(initial_data.user, field_for_update)
 
-    # Убираем title — он может быть ограничен (Mr./Mrs./Miss)
     new_user_data = RegistrationData.generate_data()
     new_field_value = getattr(new_user_data, field_for_update)
 
-    # Отправляем PUT запрос
     with allure.step(f"Отправляем PUT запрос для изменения поля '{field_for_update}'"):
         response = api_session.put(
             f"{BASE_URL}/api/updateAccount",
@@ -267,7 +256,6 @@ def test_update_user(api_session, create_delete_acc):
         assert validated_response.responseCode == 200
         assert "User updated!" in validated_response.message
 
-    # НОВЫЙ ШАГ: Проверяем, что данные ДЕЙСТВИТЕЛЬНО обновились
     with allure.step("Проверяем, что поле действительно обновилось в системе"):
         updated_response = api_session.get(
             f"{BASE_URL}/api/getUserDetailByEmail",

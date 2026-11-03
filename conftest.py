@@ -10,13 +10,11 @@ from utils.generate_user_data_for_api_tests import generate_user_data
 def api_session():
     """Создает единую сессию requests для всех API тестов (ускоряет прогон)"""
     session = requests.Session()
-    # Опционально: можно сразу задать базовый URL или заголовки
-    # session.headers.update({"User-Agent": "QA-Automation/1.0"})
 
     yield session
 
-    # Teardown: закрываем сессию после всех тестов
     session.close()
+
 
 @pytest.fixture
 def create_delete_acc(api_session):
@@ -30,7 +28,7 @@ def create_delete_acc(api_session):
     yield user_obj, user_data
 
     delete_response = api_session.delete(f"{BASE_URL}/api/deleteAccount",
-                                  data={"email": user_data["email"], "password": user_data["password"]})
+                                         data={"email": user_data["email"], "password": user_data["password"]})
 
     validated_response = APIMessage(**delete_response.json())
     assert validated_response.responseCode == 200, f'Ожидаемый responceCode - 201, получили {validated_response.responseCode}'

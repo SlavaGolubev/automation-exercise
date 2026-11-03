@@ -15,7 +15,6 @@ from pages.products_page import ProductPage
 def test_search_product_success(page: Page, product_name, expected_search_result):
     """Проверяем фунцкционал поиска товара."""
 
-    # Перехват запросов рекламы
     page.route("**/*", lambda route:
     route.abort() if any(ad_domain in route.request.url for ad_domain in
                          ["googleadservices", "googlesyndication", "doubleclick", "google_vignette"])
