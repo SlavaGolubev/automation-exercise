@@ -22,7 +22,9 @@ def create_delete_acc(api_session):
 
     create_response = api_session.post(f"{BASE_URL}/api/createAccount", data=user_data)
 
-    assert create_response.status_code==200, f'Сервер вернул ошибку - {create_response.status_code}'
+    assert create_response.status_code == 200, \
+        f"Сервер вернул ошибку {create_response.status_code} при создании пользователя. " \
+        f"Возможно, сайт перегружен. Ответ сервера: {create_response.text[:100]}..."
     validated_response = APIMessage(**create_response.json())
     assert validated_response.responseCode == 201, f'Ожидаемый responseCode - 201, получили {validated_response.responseCode}'
     assert "User created!" in validated_response.message, f"Ожидаемое сообщение - 'User created!', а получили - {validated_response.message}"
