@@ -55,6 +55,7 @@ def test_registration_with_existing_email(page):
         registration_page.create_acc(data_for_registration)
 
     with allure.step('Проверяем успех создания первого аккаунта.'):
+        page.wait_for_load_state("networkidle")
         allure.attach(page.screenshot(), attachment_type=allure.attachment_type.PNG, name="Account created")
         assert registration_page.check_success_acc(), "Первый аккаунт не был создан."
 
@@ -65,7 +66,15 @@ def test_registration_with_existing_email(page):
         registration_page.fill_signup_form(data_for_registration)
 
     with allure.step('Проверяем вывод предупреждения о том что email уже существует.'):
-        allure.attach(page.screenshot(), attachment_type=allure.attachment_type.PNG, name="Email already exists message")
+        # Ждем, пока страница стабилизируется (нет активных сетевых запросов)
+        page.wait_for_load_state("networkidle")
+
+        # Теперь делаем скриншот
+        allure.attach(
+            page.screenshot(),
+            attachment_type=allure.attachment_type.PNG,
+            name="Email already exists message"
+        )
         assert registration_page.check_email_exist_message()
 
 @allure.epic('UI Testing')
@@ -97,7 +106,7 @@ def test_registration_with_invalid_email(page,invalid_email):
 @allure.severity(allure.severity_level.NORMAL)
 @pytest.mark.parametrize(
     'empty_field',
-    ["password","firstname","lastname","address","city","state","zip","mobile_number"]
+    ["password","first_name","last_name","address1","city","state","zipcode","mobile_number"]
 )
 def test_registration_with_empty_required_field(page, empty_field):
     """Негативный тест при незаполнении обязательных полей регистрации."""
@@ -108,12 +117,15 @@ def test_registration_with_empty_required_field(page, empty_field):
 
     with allure.step('Заходим на страницу авторизации.'):
         registration_page.open('/login')
+        page.wait_for_load_state("domcontentloaded")
 
     with allure.step('Вводим имя и email для редиректа на страницу регистрации.'):
         registration_page.fill_signup_form(data)
+        page.wait_for_load_state("networkidle")
 
     with allure.step(f'Заполняем форму тестовыми данными c пустым полем {empty_field} и нажимаем кнопку создания аккаунта.'):
         registration_page.create_acc(data)
+        page.wait_for_load_state("domcontentloaded")
 
     with allure.step('Проверяем отказ в создании аккаунта при пустом обязательном поле.'):
         allure.attach(page.screenshot(), attachment_type=allure.attachment_type.PNG, name="Account created")

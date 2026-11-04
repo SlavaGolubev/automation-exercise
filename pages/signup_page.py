@@ -17,8 +17,8 @@ class RegistrationPage(BasePage):
         self.signup_nav_locator = self.page.locator("#header a[href='/login']")
         self.registration_title_locator = self.page.locator("form[action='/signup'] b")
 
-        self.male = self.page.locator("div.radio-inline label[for='id_gender1']")
-        self.female = self.page.locator("div.radio-inline label[for='id_gender2']")
+        self.male = self.page.locator("div.radio-inline input#id_gender1")
+        self.female = self.page.locator("div.radio-inline input#id_gender2")
         self.name = self.page.locator("[data-qa='name']")
         self.email = self.page.locator("[data-qa='email']")
         self.password = self.page.locator("[data-qa='password']")
