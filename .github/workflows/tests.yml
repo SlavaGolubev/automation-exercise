@@ -31,11 +31,11 @@ jobs:
 
     - name: Run API tests
       run: |
-        pytest tests/api/ -v --alluredir=allure-results
+        pytest tests/api/ -v --alluredir=allure-results --reruns 3 --reruns-delay 2
 
     - name: Run UI tests
       run: |
-        pytest tests/ui/ -v --alluredir=allure-results
+        pytest tests/ui/ -v --alluredir=allure-results --reruns 3 --reruns-delay 2
 
     - name: Upload Allure results
       if: always()

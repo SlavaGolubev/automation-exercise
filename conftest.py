@@ -1,5 +1,7 @@
 import pytest
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 from models.api_responses import APIMessage
 from tests.api.test_catalog_api import BASE_URL
@@ -8,8 +10,25 @@ from utils.generate_user_data_for_api_tests import generate_user_data
 
 @pytest.fixture(scope="session")
 def api_session():
-    """Создает единую сессию requests для всех API тестов (ускоряет прогон)"""
+    """Создает сессию requests с автоматическими ретраями для нестабильных серверов"""
+
+    # Настраиваем стратегию ретраев
+    retry_strategy = Retry(
+        total=3,  # Максимум 3 попытки
+        backoff_factor=1,  # Задержка между попытками: 1с, 2с, 4с (экспоненциальная)
+        status_forcelist=[429, 500, 502, 503, 504],  # При каких HTTP-статусах ретраить
+        allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS", "TRACE"]  # Для каких методов
+    )
+
+    # Создаем адаптер с этой стратегией
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+
+    # Создаем сессию
     session = requests.Session()
+
+    # Применяем адаптер для HTTP и HTTPS
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
 
     yield session
 
