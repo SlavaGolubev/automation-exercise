@@ -9,11 +9,21 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    env:
+      TEST_API_KEY: ${{ secrets.TEST_API_KEY }}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v5
@@ -29,6 +39,9 @@ jobs:
       run: |
         playwright install chromium
 
+    - name: Print secret (для проверки)
+      run: |
+        echo "API key is set: ${{ env.TEST_API_KEY != '' }}"
     - name: Run API tests
       run: |
         pytest tests/api/ -v --alluredir=allure-results --reruns 3 --reruns-delay 2
